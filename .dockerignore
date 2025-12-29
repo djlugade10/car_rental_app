@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment files (should be mounted or passed as secrets)
+.env
+.env.local
+.env.development
+.env.production
+.env.uat
+.env.*.local
+
+# Build outputs (will be generated in container)
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+
+# Testing
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
