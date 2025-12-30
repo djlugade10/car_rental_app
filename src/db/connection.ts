@@ -13,11 +13,15 @@ export const db = drizzle(pool, { schema });
 // Connection management
 export const connectDB = async (): Promise<void> => {
   try {
-    await pool.connect();
+    const client = await pool.connect();
+    client.release();
     console.log("✅ Connected to PostgreSQL database via Drizzle ORM");
   } catch (error) {
     console.error("❌ Database connection error:", error);
-    process.exit(1);
+    // Don't exit in production/serverless environment
+    if (process.env.NODE_ENV !== "production") {
+      process.exit(1);
+    }
   }
 };
 
