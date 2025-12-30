@@ -6,9 +6,8 @@
   "scripts": {
     "dev": "dotenv -e .env.development -- tsx watch --tsconfig tsconfig.json src/index.ts",
     "dev:uat": "dotenv -e .env.uat -- tsx watch --tsconfig tsconfig.json src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/index.js --allow-overwrite --sourcemap",
-    "vercel-build": "npm run build",
-    "start": "node dist/index.js",
+    "build": "tsc && tsc-alias --resolve-full-paths",
+    "start": "dotenv -e .env.production -- node dist/index.js",
     "start:dev": "dotenv -e .env.development -- node dist/index.js",
     "start:uat": "dotenv -e .env.uat -- node dist/index.js",
     "lint": "biome check .",
