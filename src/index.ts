@@ -10,7 +10,7 @@ import corsOptions from "@src/config/corsOptions";
 import { connectDB, closeDB } from "@src/db/connection";
 import errorHandler from "@src/middlewares/errorHandler";
 import { rateLimiter } from "@src/middlewares/rateLimiter";
-import { info, requestLogger } from "@src/utils/logger/logger";
+import { requestLogger } from "@src/utils/logger/logger";
 import healthRoutes from "@src/routes/health";
 import adminRoutes from "@src/routes/admin";
 import customerRoutes from "@src/routes/customer";
