@@ -1,0 +1,6 @@
+.env.development
+.env.local
+.env.uat
+.git/
+*.md
+.DS_Store
