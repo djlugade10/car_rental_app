@@ -12,7 +12,7 @@ export class CommonCarController extends BaseController {
   static async getCars(req: Request, res: Response): Promise<Response> {
     try {
       const userRole = req.user?.role || req.user?.type;
-      const isCustomer = userRole === "CUSTOMER";
+      const isCustomer = userRole === UserRole.customer;
 
       const filters = {
         available: isCustomer
@@ -28,7 +28,7 @@ export class CommonCarController extends BaseController {
         fleetId: req.query.fleetId ? (req.query.fleetId as string) : undefined,
         fuelType: req.query.fuelType as FuelType | undefined,
         transmission: req.query.transmission as TransmissionType | undefined,
-        status: isCustomer ? CarStatus.ACTIVE : (req.query.status as string | undefined),
+        status: isCustomer ? CarStatus.active : (req.query.status as string | undefined),
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
       };
@@ -51,17 +51,7 @@ export class CommonCarController extends BaseController {
         ResponseCodes.CARS_RETRIEVED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to retrieve cars";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonCarController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code!
-      );
+      return CommonCarController.handleControllerError(res, error, "Failed to retrieve cars");
     }
   }
 
@@ -69,13 +59,13 @@ export class CommonCarController extends BaseController {
   static async getCarById(req: Request, res: Response): Promise<Response> {
     try {
       const userRole = req.user?.role || req.user?.type;
-      const isCustomer = userRole === "CUSTOMER";
+      const isCustomer = userRole === UserRole.customer;
       const carId = req.params.id as string;
 
       const car = await CarService.getCarById(carId);
 
       // Customer safety check
-      if (isCustomer && car.status !== CarStatus.ACTIVE) {
+      if (isCustomer && car.status !== CarStatus.active) {
         return CommonCarController.errorResponse(
           res,
           "Car is not available",
@@ -93,17 +83,7 @@ export class CommonCarController extends BaseController {
         ResponseCodes.CARS_RETRIEVED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to retrieve car";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonCarController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code!
-      );
+      return CommonCarController.handleControllerError(res, error, "Failed to retrieve car");
     }
   }
 }

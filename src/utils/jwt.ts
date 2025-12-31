@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { env } from "@src/utils/env";
-import { UserRole, UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
 
 const JWT_SECRET = env.JWT_SECRET;
 const JWT_EXPIRES_IN = "7d"; // 1 week
@@ -10,7 +10,7 @@ export interface JWTPayload {
   email?: string;
   phone?: string;
   role: UserRole;
-  type: UserType;
+  type: UserRole;
 }
 
 export const generateToken = (payload: JWTPayload): string => {

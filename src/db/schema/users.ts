@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import { UserRole } from "@src/constants/enums";
 
 // Enums
-export const adminRoleEnum = pgEnum("AdminRole", [UserRole.ADMIN]);
+export const adminRoleEnum = pgEnum("AdminRole", [UserRole.admin]);
 
 // Admin table
 export const admins = pgTable("admins", {
@@ -20,7 +20,7 @@ export const admins = pgTable("admins", {
   password: varchar("password", { length: 255 }).notNull(),
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
-  role: adminRoleEnum("role").default(UserRole.ADMIN).notNull(),
+  role: adminRoleEnum("role").default(UserRole.admin).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { BaseController } from "@src/controllers/base/baseController";
 import { AuthService } from "@src/services/authService";
 import { ResponseCodes } from "@src/constants/responseCodes";
-import { UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
 
 export class CustomerAuthController extends BaseController {
   protected static override controllerName = "Customer Auth Controller";
@@ -14,7 +14,7 @@ export class CustomerAuthController extends BaseController {
 
       const profile = await AuthService.getUserProfile(
         req.user!.id,
-        UserType.CUSTOMER // Customer type is always "customer"
+        UserRole.customer // Customer type is always "customer"
       );
 
       return this.successResponse(
@@ -25,12 +25,7 @@ export class CustomerAuthController extends BaseController {
         ResponseCodes.AUTH_PROFILE_RETRIEVED
       );
     } catch (error) {
-      return this.errorResponse(
-        res,
-        ResponseCodes.SERVER_ERROR,
-        500,
-        error as Error
-      );
+      return this.handleControllerError(res, error);
     }
   }
 }

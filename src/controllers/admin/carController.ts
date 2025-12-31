@@ -21,11 +21,7 @@ export class CarController extends BaseController {
         ResponseCodes.CAR_CREATED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create car";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return this.errorResponse(res, message, status, error as Error, code!);
+      return this.handleControllerError(res, error, "Failed to create car");
     }
   }
 
@@ -45,11 +41,7 @@ export class CarController extends BaseController {
         ResponseCodes.CAR_UPDATED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update car";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return this.errorResponse(res, message, status, error as Error, code!);
+      return this.handleControllerError(res, error, "Failed to update car");
     }
   }
 
@@ -69,11 +61,7 @@ export class CarController extends BaseController {
         ResponseCodes.CAR_DELETED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete car";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return this.errorResponse(res, message, status, error as Error, code!);
+      return this.handleControllerError(res, error, "Failed to delete car");
     }
   }
 
@@ -104,12 +92,7 @@ export class CarController extends BaseController {
         ResponseCodes.CAR_AVAILABILITY_UPDATED_SUCCESS
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update car availability";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return this.errorResponse(res, message, status, error as Error, code!);
+      return this.handleControllerError(res, error, "Failed to update car availability");
     }
   }
 
@@ -126,11 +109,7 @@ export class CarController extends BaseController {
         ResponseCodes.DASHBOARD_STATS_RETRIEVED_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to retrieve statistics";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return this.errorResponse(res, message, status, error as Error, code!);
+      return this.handleControllerError(res, error, "Failed to retrieve statistics");
     }
   }
 }

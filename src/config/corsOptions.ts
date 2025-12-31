@@ -2,7 +2,7 @@ import type { CorsOptions } from "cors";
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://car-rental-app-nine-tan.vercel.app/"
+  "https://car-rental-app-djlugade10s-projects.vercel.app/"
 ];
 
 const corsOptions: CorsOptions = {

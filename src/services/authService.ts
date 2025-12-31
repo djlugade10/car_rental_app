@@ -9,7 +9,7 @@ import type {
 } from "@src/schemas/authSchema";
 import { ResponseCodes } from "@src/constants/responseCodes";
 import { AppError } from "@src/utils/AppError";
-import { UserRole, UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
 
 export class AuthService {
   // Helper to verify credentials
@@ -35,6 +35,37 @@ export class AuthService {
     return user;
   }
 
+  // Helper to find user by email or phone identifier
+  private static async findUserByIdentifier(identifier: string): Promise<{ user: any; userType: UserRole }> {
+    const isEmail = identifier.includes("@");
+    let user;
+    let userType: UserRole;
+
+    if (isEmail) {
+      user = await db
+        .select()
+        .from(admins)
+        .where(eq(admins.email, identifier))
+        .limit(1)
+        .then((result) => result[0]);
+      userType = UserRole.admin;
+    } else {
+      user = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.phone, identifier))
+        .limit(1)
+        .then((result) => result[0]);
+      userType = UserRole.customer;
+    }
+
+    if (!user) {
+      throw new AppError("User not found", ResponseCodes.AUTH_USER_NOT_FOUND, 404);
+    }
+
+    return { user, userType };
+  }
+
 
   // Admin login
   static async loginAdmin(loginData: AdminLoginInput) {
@@ -54,8 +85,8 @@ export class AuthService {
     const tokenPayload: JWTPayload = {
       id: admin.id,
       email: admin.email,
-      role: UserRole.ADMIN,
-      type: UserType.ADMIN,
+      role: UserRole.admin,
+      type: UserRole.admin,
     };
 
     const token = generateToken(tokenPayload);
@@ -67,8 +98,8 @@ export class AuthService {
         email: admin.email,
         firstName: admin.firstName,
         lastName: admin.lastName,
-        role: UserRole.ADMIN,
-        type: UserType.ADMIN,
+        role: UserRole.admin,
+        type: UserRole.admin,
       },
     };
   }
@@ -91,8 +122,8 @@ export class AuthService {
     const tokenPayload: JWTPayload = {
       id: customer.id,
       phone: customer.phone,
-      role: UserRole.CUSTOMER,
-      type: UserType.CUSTOMER,
+      role: UserRole.customer,
+      type: UserRole.customer,
     };
 
     const token = generateToken(tokenPayload);
@@ -105,15 +136,15 @@ export class AuthService {
         phone: customer.phone,
         firstName: customer.firstName,
         lastName: customer.lastName,
-        role: UserRole.CUSTOMER,
-        type: UserType.CUSTOMER,
+        role: UserRole.customer,
+        type: UserRole.customer,
       },
     };
   }
 
   // Get user profile
-  static async getUserProfile(userId: string, userType: UserType) {
-    if (userType === UserType.ADMIN) {
+  static async getUserProfile(userId: string, userType: UserRole) {
+    if (userType === UserRole.admin) {
       const admin = await db
         .select({
           id: admins.id,
@@ -134,7 +165,7 @@ export class AuthService {
         throw new Error(ResponseCodes.AUTH_USER_NOT_FOUND);
       }
 
-      return { ...admin, type: UserType.ADMIN };
+      return { ...admin, type: UserRole.admin };
     } else {
       const customer = await db
         .select({
@@ -160,8 +191,8 @@ export class AuthService {
 
       return {
         ...customer,
-        type: UserType.CUSTOMER,
-        role: UserRole.CUSTOMER,
+        type: UserRole.customer,
+        role: UserRole.customer,
       };
     }
   }
@@ -169,13 +200,13 @@ export class AuthService {
   // Change password
   static async changePassword(
     userId: string,
-    userType: UserType,
+    userType: UserRole,
     currentPassword: string,
     newPassword: string
   ) {
     let user;
 
-    if (userType === "admin") {
+    if (userType === UserRole.admin) {
       user = await db
         .select()
         .from(admins)
@@ -208,7 +239,7 @@ export class AuthService {
     const hashedNewPassword = await hashPassword(newPassword);
 
     // Update password
-    if (userType === "admin") {
+    if (userType === UserRole.admin) {
       await db
         .update(admins)
         .set({ password: hashedNewPassword })
@@ -223,40 +254,15 @@ export class AuthService {
     return { message: "Password changed successfully" };
   }
 
-  // Forgot Password (Generate OTP)
   static async forgotPassword(identifier: string) {
-    const isEmail = identifier.includes("@");
-    let user;
-    let userType: "admin" | "customer";
-
-    if (isEmail) {
-      user = await db
-        .select()
-        .from(admins)
-        .where(eq(admins.email, identifier))
-        .limit(1)
-        .then((result) => result[0]);
-      userType = "admin";
-    } else {
-      user = await db
-        .select()
-        .from(customers)
-        .where(eq(customers.phone, identifier))
-        .limit(1)
-        .then((result) => result[0]);
-      userType = "customer";
-    }
-
-    if (!user) {
-      throw new AppError("User not found", ResponseCodes.AUTH_USER_NOT_FOUND, 404);
-    }
+    const { user, userType } = await this.findUserByIdentifier(identifier);
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     // Delete any existing OTPs for this user
-    if (userType === "admin") {
+    if (userType === UserRole.admin) {
       await db.delete(otps).where(eq(otps.adminId, user.id));
     } else {
       await db.delete(otps).where(eq(otps.customerId, user.id));
@@ -264,7 +270,7 @@ export class AuthService {
 
     // Insert new OTP
     await db.insert(otps).values(
-      userType === "admin"
+      userType === UserRole.admin
         ? { adminId: user.id, otp, expiresAt }
         : { customerId: user.id, otp, expiresAt }
     );
@@ -275,45 +281,19 @@ export class AuthService {
     return { message: ResponseCodes.AUTH_OTP_SENT };
   }
 
-  // Reset Password with OTP
   static async resetPasswordWithOtp(
     identifier: string,
     otp: string,
     newPassword: string
   ) {
-    // First, find the user to get their ID
-    const isEmail = identifier.includes("@");
-    let user;
-    let userType: "admin" | "customer";
-
-    if (isEmail) {
-      user = await db
-        .select()
-        .from(admins)
-        .where(eq(admins.email, identifier))
-        .limit(1)
-        .then((result) => result[0]);
-      userType = "admin";
-    } else {
-      user = await db
-        .select()
-        .from(customers)
-        .where(eq(customers.phone, identifier))
-        .limit(1)
-        .then((result) => result[0]);
-      userType = "customer";
-    }
-
-    if (!user) {
-      throw new AppError("User not found", ResponseCodes.AUTH_USER_NOT_FOUND, 404);
-    }
+    const { user, userType } = await this.findUserByIdentifier(identifier);
 
     // Find OTP record for this user
     const otpRecord = await db
       .select()
       .from(otps)
       .where(
-        userType === "admin"
+        userType === UserRole.admin
           ? eq(otps.adminId, user.id)
           : eq(otps.customerId, user.id)
       )
@@ -342,7 +322,7 @@ export class AuthService {
     // Executing update and delete in a transaction for atomicity
     await db.transaction(async (tx) => {
       // Update password
-      if (userType === "admin") {
+      if (userType === UserRole.admin) {
         await tx
           .update(admins)
           .set({ password: hashedNewPassword })
@@ -390,7 +370,7 @@ export class AuthService {
         password: hashedPassword,
         firstName: input.firstName,
         lastName: input.lastName,
-        role: (input.role || UserRole.ADMIN) as typeof UserRole.ADMIN,
+        role: (input.role || UserRole.admin) as typeof UserRole.admin,
         isActive: true,
         updatedAt: new Date(),
       })

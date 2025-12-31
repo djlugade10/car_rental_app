@@ -17,23 +17,24 @@ import { FuelType, TransmissionType, CarStatus } from "@src/constants/enums";
 
 // Enums
 export const fuelTypeEnum = pgEnum("FuelType", [
-  FuelType.GASOLINE,
-  FuelType.DIESEL,
-  FuelType.ELECTRIC,
-  FuelType.HYBRID,
+  FuelType.gasoline,
+  FuelType.diesel,
+  FuelType.electric,
+  FuelType.hybrid,
+  FuelType.cng,
 ]);
 
 export const transmissionTypeEnum = pgEnum("TransmissionType", [
-  TransmissionType.MANUAL,
-  TransmissionType.AUTOMATIC,
-  TransmissionType.CVT,
+  TransmissionType.manual,
+  TransmissionType.automatic,
+  TransmissionType.cvt,
 ]);
 
 export const carStatusEnum = pgEnum("CarStatus", [
-  CarStatus.ACTIVE,
-  CarStatus.MAINTENANCE,
-  CarStatus.OUT_OF_SERVICE,
-  CarStatus.RETIRED,
+  CarStatus.active,
+  CarStatus.maintenance,
+  CarStatus.outOfService,
+  CarStatus.retired,
 ]);
 
 // Categories table
@@ -69,8 +70,8 @@ export const cars = pgTable("cars", {
   pricePerDay: decimal("price_per_day", { precision: 10, scale: 2 }).notNull(),
   available: boolean("available").default(true).notNull(),
   mileage: integer("mileage"),
-  fuelType: fuelTypeEnum("fuel_type").default(FuelType.GASOLINE).notNull(),
-  transmission: transmissionTypeEnum("transmission").default(TransmissionType.MANUAL).notNull(),
+  fuelType: fuelTypeEnum("fuel_type").default(FuelType.gasoline).notNull(),
+  transmission: transmissionTypeEnum("transmission").default(TransmissionType.manual).notNull(),
   seats: integer("seats").default(5).notNull(),
   description: text("description"),
   imageUrl: varchar("image_url", { length: 500 }),
@@ -79,7 +80,7 @@ export const cars = pgTable("cars", {
   registrationExpiry: timestamp("registration_expiry"),
   lastServiceDate: timestamp("last_service_date"),
   nextServiceDue: timestamp("next_service_due"),
-  status: carStatusEnum("status").default(CarStatus.ACTIVE).notNull(),
+  status: carStatusEnum("status").default(CarStatus.active).notNull(),
   adminId: varchar("admin_id", { length: 10 }).notNull(),
   categoryId: varchar("category_id", { length: 10 }).notNull(),
   fleetId: varchar("fleet_id", { length: 10 }),

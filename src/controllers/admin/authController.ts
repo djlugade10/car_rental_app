@@ -1,9 +1,8 @@
 import { BaseController } from "@src/controllers/base/baseController";
-import type { AdminLoginInput } from "@src/schemas/authSchema";
 import { AuthService } from "@src/services/authService";
 import type { Request, Response } from "express";
 import { ResponseCodes } from "@src/constants/responseCodes";
-import { UserRole, UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
 
 export class AdminAuthController extends BaseController {
   protected static override controllerName = "Admin Auth Controller";
@@ -12,7 +11,7 @@ export class AdminAuthController extends BaseController {
   static async getProfile(req: Request, res: Response): Promise<Response> {
     try {
 
-      const userType = req.user!.role === UserRole.ADMIN ? UserType.ADMIN : UserType.CUSTOMER;
+      const userType = req.user!.role === UserRole.admin ? UserRole.admin : UserRole.customer;
 
       const profile = await AuthService.getUserProfile(req.user!.id, userType);
 
@@ -24,12 +23,7 @@ export class AdminAuthController extends BaseController {
         ResponseCodes.AUTH_PROFILE_RETRIEVED
       );
     } catch (error) {
-      return AdminAuthController.errorResponse(
-        res,
-        ResponseCodes.SERVER_ERROR,
-        500,
-        error as Error
-      );
+      return AdminAuthController.handleControllerError(res, error);
     }
   }
 }

@@ -34,21 +34,44 @@ interface GetCarsFilters {
   available?: boolean;
   categoryId?: string;
   fleetId?: string;
-  fuelType?: string;
-  transmission?: string;
-  status?: string;
+  fuelType?: FuelType;
+  transmission?: TransmissionType;
+  status?: CarStatus;
   page?: number;
   limit?: number;
 }
 
 export class CarService {
-  // Add a new car
-  static async addCar(input: AddCarInput, adminId: string) {
-    // Verify category exists
+  // Helper: Verify car exists and belongs to admin
+  private static async verifyCarOwnership(carId: string, adminId: string) {
+    const car = await db
+      .select()
+      .from(cars)
+      .where(eq(cars.id, carId))
+      .limit(1)
+      .then((result) => result[0]);
+
+    if (!car) {
+      throw new AppError("Car not found", ResponseCodes.VAL_CAR_NOT_FOUND, 404);
+    }
+
+    if (car.adminId !== adminId) {
+      throw new AppError(
+        "You don't have permission to modify this car",
+        ResponseCodes.AUTH_FORBIDDEN,
+        403
+      );
+    }
+
+    return car;
+  }
+
+  // Helper: Verify category exists
+  private static async verifyCategoryExists(categoryId: string) {
     const category = await db
       .select()
       .from(categories)
-      .where(eq(categories.id, input.categoryId))
+      .where(eq(categories.id, categoryId))
       .limit(1)
       .then((result) => result[0]);
 
@@ -56,18 +79,33 @@ export class CarService {
       throw new AppError("Category not found", ResponseCodes.VALIDATION_ERROR, 404);
     }
 
+    return category;
+  }
+
+  // Helper: Verify fleet exists
+  private static async verifyFleetExists(fleetId: string) {
+    const fleet = await db
+      .select()
+      .from(fleets)
+      .where(eq(fleets.id, fleetId))
+      .limit(1)
+      .then((result) => result[0]);
+
+    if (!fleet) {
+      throw new AppError("Fleet not found", ResponseCodes.VALIDATION_ERROR, 404);
+    }
+
+    return fleet;
+  }
+
+  // Add a new car
+  static async addCar(input: AddCarInput, adminId: string) {
+    // Verify category exists
+    await this.verifyCategoryExists(input.categoryId);
+
     // Check fleet (optional)
     if (input.fleetId) {
-      const fleet = await db
-        .select()
-        .from(fleets)
-        .where(eq(fleets.id, input.fleetId))
-        .limit(1)
-        .then((result) => result[0]);
-
-      if (!fleet) {
-        throw new AppError("Fleet not found", ResponseCodes.VALIDATION_ERROR, 404);
-      }
+      await this.verifyFleetExists(input.fleetId);
     }
 
     // Check if license plate already exists
@@ -102,51 +140,16 @@ export class CarService {
   // Update a car
   static async updateCar(id: string, input: UpdateCarInput, adminId: string) {
     // Check if car exists and belongs to admin
-    const car = await db
-      .select()
-      .from(cars)
-      .where(eq(cars.id, id))
-      .limit(1)
-      .then((result) => result[0]);
-
-    if (!car) {
-      throw new AppError("Car not found", ResponseCodes.VAL_CAR_NOT_FOUND, 404);
-    }
-
-    if (car.adminId !== adminId) {
-      throw new AppError(
-        "You don't have permission to update this car",
-        ResponseCodes.AUTH_FORBIDDEN,
-        403
-      );
-    }
+    const car = await this.verifyCarOwnership(id, adminId);
 
     // Verify category if being updated
     if (input.categoryId) {
-      const category = await db
-        .select()
-        .from(categories)
-        .where(eq(categories.id, input.categoryId))
-        .limit(1)
-        .then((result) => result[0]);
-
-      if (!category) {
-        throw new AppError("Category not found", ResponseCodes.VALIDATION_ERROR, 404);
-      }
+      await this.verifyCategoryExists(input.categoryId);
     }
 
     // Verify fleet if being updated
     if (input.fleetId) {
-      const fleet = await db
-        .select()
-        .from(fleets)
-        .where(eq(fleets.id, input.fleetId))
-        .limit(1)
-        .then((result) => result[0]);
-
-      if (!fleet) {
-        throw new AppError("Fleet not found", ResponseCodes.VALIDATION_ERROR, 404);
-      }
+      await this.verifyFleetExists(input.fleetId);
     }
 
     // Check license plate uniqueness if being updated
@@ -183,24 +186,7 @@ export class CarService {
   // Delete a car
   static async deleteCar(id: string, adminId: string) {
     // Check if car exists and belongs to admin
-    const car = await db
-      .select()
-      .from(cars)
-      .where(eq(cars.id, id))
-      .limit(1)
-      .then((result) => result[0]);
-
-    if (!car) {
-      throw new AppError("Car not found", ResponseCodes.VAL_CAR_NOT_FOUND, 404);
-    }
-
-    if (car.adminId !== adminId) {
-      throw new AppError(
-        "You don't have permission to delete this car",
-        ResponseCodes.AUTH_FORBIDDEN,
-        403
-      );
-    }
+    await this.verifyCarOwnership(id, adminId);
 
     await db.delete(cars).where(eq(cars.id, id));
 
@@ -287,24 +273,7 @@ export class CarService {
   // Toggle car availability
   static async toggleAvailability(id: string, available: boolean, adminId: string) {
     // Check if car exists and belongs to admin
-    const car = await db
-      .select()
-      .from(cars)
-      .where(eq(cars.id, id))
-      .limit(1)
-      .then((result) => result[0]);
-
-    if (!car) {
-      throw new AppError("Car not found", ResponseCodes.VAL_CAR_NOT_FOUND, 404);
-    }
-
-    if (car.adminId !== adminId) {
-      throw new AppError(
-        "You don't have permission to update this car",
-        ResponseCodes.AUTH_FORBIDDEN,
-        403
-      );
-    }
+    await this.verifyCarOwnership(id, adminId);
 
     // Update availability
     const updatedCar = await db

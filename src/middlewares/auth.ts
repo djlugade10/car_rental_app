@@ -6,6 +6,7 @@ import {
 } from "@src/utils/jwt";
 import { BaseController } from "@src/controllers/base/baseController";
 import { ResponseCodes } from "@src/constants/responseCodes";
+import { UserRole } from "@src/constants/enums";
 
 // Extend Request interface to include user
 declare global {
@@ -126,11 +127,11 @@ export const authorize = (allowedRoles: string[]) => {
 
 // Role-specific middleware - using consistent role names
 // Role-specific middleware - using consistent role names
-export const requireAdmin = authorize(["ADMIN"]);
-export const requireCustomer = authorize(["CUSTOMER"]);
+export const requireAdmin = authorize([UserRole.admin]);
+export const requireCustomer = authorize([UserRole.customer]);
 
 // Utility middleware (keeping for backward compatibility)
-export const requireAnyRole = authorize(["CUSTOMER", "ADMIN"]);
+export const requireAnyRole = authorize([UserRole.customer, UserRole.admin]);
 
 // Optional authentication (for routes that work with or without auth)
 export const optionalAuth = (

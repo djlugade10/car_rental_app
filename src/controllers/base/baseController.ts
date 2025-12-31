@@ -4,7 +4,8 @@ import {
   ResponseCodes,
   type ResponseCode,
 } from "@src/constants/responseCodes";
-import { UserRole, UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
+import { AppError } from "@src/utils/AppError";
 
 export interface SuccessResponseData {
   success: true;
@@ -90,6 +91,20 @@ export class BaseController {
     });
   }
 
+  // Helper method to handle errors in controller catch blocks
+  protected static handleControllerError(
+    res: Response,
+    error: unknown,
+    fallbackMessage: string = "Operation failed"
+  ): Response<ErrorResponseData> {
+    const message = error instanceof Error ? error.message : fallbackMessage;
+    const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
+    const status = error instanceof AppError ? error.status : 500;
+
+    return this.errorResponse(res, message, status, error as Error, code);
+  }
+
+
   public static validationErrorResponse(
     res: Response,
     message = "Validation failed",
@@ -146,7 +161,7 @@ export class BaseController {
 
   // Check if user has Admin role
   protected static requireAdmin(req: Request, res: Response): boolean {
-    if (!req.user || req.user.role !== UserRole.ADMIN) {
+    if (!req.user || req.user.role !== UserRole.admin) {
       this.errorResponse(
         res,
         "Admin access required",
@@ -162,7 +177,7 @@ export class BaseController {
 
   // Check if user has Customer role
   protected static requireCustomer(req: Request, res: Response): boolean {
-    if (!req.user || req.user.type !== "customer") {
+    if (!req.user || req.user.type !== UserRole.customer) {
       this.errorResponse(
         res,
         "Customer access required",
@@ -196,12 +211,12 @@ export class BaseController {
     }
 
     // Admin can access any resource
-    if (req.user.role === UserRole.ADMIN) {
+    if (req.user.role === UserRole.admin) {
       return true;
     }
 
     // Customer can only access their own resources
-    if (req.user.type === "customer" && req.user.id === resourceOwnerId) {
+    if (req.user.type === UserRole.customer && req.user.id === resourceOwnerId) {
       return true;
     }
 
@@ -221,16 +236,14 @@ export class BaseController {
     return req.user?.role || req.user?.type || null;
   }
 
-  // Check if user is SuperAdmin
-
 
   // Check if user is Admin
   protected static isAdmin(req: Request): boolean {
-    return req.user?.role === UserRole.ADMIN;
+    return req.user?.role === UserRole.admin;
   }
 
   // Check if user is Customer
   protected static isCustomer(req: Request): boolean {
-    return req.user?.type === UserType.CUSTOMER;
+    return req.user?.type === UserRole.customer;
   }
 }

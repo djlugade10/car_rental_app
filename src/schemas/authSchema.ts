@@ -148,8 +148,8 @@ export const createAdminSchema = yup.object({
 
   role: yup
     .string()
-    .oneOf([UserRole.ADMIN, UserRole.CUSTOMER], "Invalid role")
-    .default(UserRole.ADMIN),
+    .oneOf([UserRole.admin, UserRole.customer], "Invalid role")
+    .default(UserRole.admin),
 });
 
 export type CreateAdminInput = yup.InferType<typeof createAdminSchema>;

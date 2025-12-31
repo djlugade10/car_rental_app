@@ -8,7 +8,7 @@ import type {
 } from "@src/schemas/authSchema";
 import { ResponseCodes } from "@src/constants/responseCodes";
 import { AppError } from "@src/utils/AppError";
-import { UserRole, UserType } from "@src/constants/enums";
+import { UserRole } from "@src/constants/enums";
 
 export class CommonAuthController extends BaseController {
   protected static override controllerName = "Common Auth Controller";
@@ -25,17 +25,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_LOGIN_SUCCESS
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed";
-      const code = error instanceof AppError ? error.code : ResponseCodes.AUTH_AUTHENTICATION_FAILED;
-      const status = error instanceof AppError ? error.status : 401;
-
-      return CommonAuthController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code
-      );
+      return CommonAuthController.handleControllerError(res, error, "Login failed");
     }
   }
 
@@ -47,7 +37,7 @@ export class CommonAuthController extends BaseController {
       }
 
       // Map role to the expected format for AuthService
-      const userType = req.user.role === UserRole.ADMIN ? UserType.ADMIN : UserType.CUSTOMER;
+      const userType = req.user.role === UserRole.admin ? UserRole.admin : UserRole.customer;
 
       const profile = await AuthService.getUserProfile(req.user.id, userType);
 
@@ -58,12 +48,7 @@ export class CommonAuthController extends BaseController {
         200
       );
     } catch (error) {
-      return CommonAuthController.errorResponse(
-        res,
-        ResponseCodes.SERVER_ERROR,
-        500,
-        error as Error
-      );
+      return CommonAuthController.handleControllerError(res, error);
     }
   }
 
@@ -77,7 +62,7 @@ export class CommonAuthController extends BaseController {
       const { currentPassword, newPassword }: ChangePasswordInput = req.body;
 
       // Map role to the expected format for AuthService
-      const userType = req.user.role === UserRole.ADMIN ? UserType.ADMIN : UserType.CUSTOMER;
+      const userType = req.user.role === UserRole.admin ? UserRole.admin : UserRole.customer;
 
       await AuthService.changePassword(
         req.user.id,
@@ -94,18 +79,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_PASSWORD_CHANGED
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to change password";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonAuthController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code
-      );
+      return CommonAuthController.handleControllerError(res, error, "Failed to change password");
     }
   }
 
@@ -122,12 +96,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_LOGOUT_SUCCESS
       );
     } catch (error) {
-      return CommonAuthController.errorResponse(
-        res,
-        ResponseCodes.SERVER_ERROR,
-        500,
-        error as Error
-      );
+      return CommonAuthController.handleControllerError(res, error);
     }
   }
 
@@ -145,18 +114,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_OTP_SENT
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to send OTP";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonAuthController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code
-      );
+      return CommonAuthController.handleControllerError(res, error, "Failed to send OTP");
     }
   }
 
@@ -178,18 +136,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_PASSWORD_RESET_SUCCESS
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to reset password";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonAuthController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code
-      );
+      return CommonAuthController.handleControllerError(res, error, "Failed to reset password");
     }
   }
 
@@ -207,18 +154,7 @@ export class CommonAuthController extends BaseController {
         ResponseCodes.AUTH_ADMIN_CREATED_SUCCESS
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create admin";
-      const code = error instanceof AppError ? error.code : ResponseCodes.SERVER_ERROR;
-      const status = error instanceof AppError ? error.status : 500;
-
-      return CommonAuthController.errorResponse(
-        res,
-        message,
-        status,
-        error as Error,
-        code
-      );
+      return CommonAuthController.handleControllerError(res, error, "Failed to create admin");
     }
   }
 }
